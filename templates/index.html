@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>株価分析アプリ</title>
+
+    <script>
+        const graphData = {{ graph | tojson }};
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+        }
+        th {
+            background-color: lightgray;
+        }
+        td {
+            text-align: right;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 250px;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #333;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>株価分析アプリ</h1>
+
+<form method="POST" action="/">
+    <div class="form-group">
+        <label for="symbol">銘柄コード</label>
+        <input type="text" id="symbol" name="symbol">
+    </div>
+    <div class="form-group">
+        <label for="start_date">分析開始日</label>
+        <input type="date" id="start_date" name="start_date">
+    </div>
+    <div class="form-group">
+        <label for="end_date">分析終了日</label>
+        <input type="date" id="end_date" name="end_date">
+    </div>
+    <div>
+        <button type="submit">分析する</button>
+    </div>
+</form>
+
+<h3>{{ symbol }}</h3>
+
+{% if rows %}
+<table>
+    <tr>
+        <th>銘柄</th>
+        <th>日付</th>
+        <th>始値</th>
+        <th>高値</th>
+        <th>低値</th>
+        <th>終値</th>
+        <th>出来高</th>
+    </tr>
+    {% for row in rows %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ "%.2f"|format(row[2]) }}</td>
+            <td>{{ "%.2f"|format(row[3]) }}</td>
+            <td>{{ "%.2f"|format(row[4]) }}</td>
+            <td>{{ "%.2f"|format(row[5]) }}</td>
+            <td>{{ row[6] }}</td>
+        </tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+{% if result %}
+    <h4>===== 分析結果 =====</h4>
+    <table>
+
+        <tr>
+            <td>始値</td>
+            <td>{{ "%.2f"|format(result["open"]) }}</td>
+        </tr>
+        <tr>
+            <td>高値</td>
+            <td>{{ "%.2f"|format(result["high"]) }}</td>
+        </tr>
+        <tr>
+            <td>低値</td>
+            <td>{{ "%.2f"|format(result["low"]) }}</td>
+        </tr>
+        <tr>
+            <td>終値</td>
+            <td>{{ "%.2f"|format(result["close"]) }}</td>
+        </tr>
+        <tr>
+            <td>平均値</td>
+            <td>{{ "%.2f"|format(result["avg"]) }}</td>
+        </tr>
+        <tr>
+            <td>値動き</td>
+            {% if result['change'] > 0 %}
+            <td>+{{ "%.2f"|format(result["change"]) }}</td>
+            {% else %}
+            <td>{{ "%.2f"|format(result["change"]) }}</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td>変動率</td>
+            {% if result['change_rate'] > 0 %}
+            <td>+{{ "%.2f"|format(result["change_rate"]) }}%</td>
+            {% else %}
+            <td>{{ "%.2f"|format(result["change_rate"]) }}%</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td>最新日</td>
+            <td>{{ result["latest_data"] }}</td>
+        </tr>
+        <tr>
+            <td>前日</td>
+            <td>{{ result["previous_date"] }}</td>
+        </tr>
+        <tr>
+            <td>前日比</td>
+            {% if result['compare'] > 0 %}
+            <td>+{{ "%.2f"|format(result["compare"]) }}%</td>
+            {% else %}
+            <td>{{ "%.2f"|format(result["compare"]) }}%</td>
+            {% endif %}
+        </tr>
+    </table>
+{% endif %}
+
+{% if message %}
+    <h4>===== 分析結果 =====</h4>
+    <p>{{ message }}</p>
+{% endif %}
+
+{% if graph %}
+
+<canvas id="stockChart" width="800" height="400"></canvas>
+<script>
+    const labels = graphData.map(row => row[0]);
+    const closePrices = graphData.map(row => row[1]);
+
+    const ctx = document.getElementById("stockChart")
+
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "終値",
+                data: closePrices,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: "株価推移",
+                    font: {
+                        size: 20
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: "日付"
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: "価格 (円)"
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+
+</body>
+
+</html>
