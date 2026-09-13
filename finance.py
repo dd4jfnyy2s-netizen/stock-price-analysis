@@ -1,7 +1,12 @@
 import requests
 import sqlite3
 
-api_key = "JC6KMVZYZ4OGFS6G."
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
 
 url = "https://www.alphavantage.co/query"
 
